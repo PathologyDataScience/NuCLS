@@ -1,0 +1,16 @@
+logs/
+data/
+results/
+.idea/
+.*.swp
+*.tif
+*.png
+*.svg
+*.mat
+*.npy
+*.npz
+*.pyc
+__pycache__/
+*-checkpoint.ipynb
+.ipynb_checkpoints
+core.*
