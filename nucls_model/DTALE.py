@@ -72,10 +72,7 @@ class DTALE(object):
 
      > Decision Tree Approximation of Learned Embeddings (DTALE)
 
-    Make sure to take a look and cite these references in the paper for
-    some context, but I haven't seen this exact way of doing things in the
-    deep-learning literature, and definitely not in the computational pathology
-    space:
+    Some related works:
 
     - Dahlin N, Kalagarla KC, Naik N, Jain R, Nuzzo P. Designing Interpretable
       Approximations to Deep Reinforcement Learning with Soft Decision Trees.
