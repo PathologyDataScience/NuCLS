@@ -4,7 +4,7 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.ops import MultiScaleRoIAlign
 from copy import deepcopy
 
-BASEPATH = "/home/mtageld/Desktop/cTME/"
+BASEPATH = opj(os.path.expanduser('~'), 'Desktop', 'NuCLS')
 sys.path.insert(0, BASEPATH)
 from GeneralUtils import reverse_dict  # noqa
 from configs.nucleus_style_defaults import NucleusCategories  # noqa
