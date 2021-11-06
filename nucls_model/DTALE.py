@@ -1,6 +1,7 @@
-import sys
 from os.path import join as opj
 from collections import Counter
+from typing import List, Dict
+from pandas import DataFrame
 import numpy as np
 import pickle
 import matplotlib.pylab as plt
@@ -68,23 +69,55 @@ class DTALE(object):
     of the model seems to be relying on. We rely on a REGRESSION tree for a
     more refined approximation of the model behavior.
 
-    I decided to call this technique DTALE, which stands for
-
-     > Decision Tree Approximation of Learned Embeddings (DTALE)
-
-    Some related works:
-
-    - Dahlin N, Kalagarla KC, Naik N, Jain R, Nuzzo P. Designing Interpretable
-      Approximations to Deep Reinforcement Learning with Soft Decision Trees.
-      arXiv preprint arXiv:2010.14785. 2020 Oct 28.
-    - https://lilianweng.github.io/lil-log/2017/08/01/how-to-explain-the- ...
-      prediction-of-a-machine-learning-model.html
+    References:
+    -----------
+        Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA,
+        Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. Explainable
+        nucleus classification using Decision Tree Approximation of Learned
+        Embeddings. Bioinformatics. 2021 Sep 29.
 
     """
     def __init__(
-            self, feats, clusts, savedir,
-            pcoln='pred_categ', ecoln0='embedding_0', ecoln1='embedding_1',
-            classes_list=None, fitkwargs=None):
+        self,
+        feats: DataFrame,
+        clusts: DataFrame,
+        savedir: str,
+        pcoln: str = 'pred_categ',
+        ecoln0: str = 'embedding_0',
+        ecoln1: str = 'embedding_1',
+        classes_list: List = None,
+        fitkwargs: Dict = None,
+    ):
+        """
+
+        Parameters
+        ----------
+        feats: DataFrame
+            A dataframe of interpretable features per nucleus. Rows are correspond
+            to nuclei and columns correspond to features. Must have the same
+            index and no of rows as the `clusts` parameter.
+        clusts: DataFrame
+            A dataframe that is indexed by nucleus name or i.d., and has at least three
+            columns, whose names are controlled by the `pcoln`, `ecoln0` and `ecoln1`
+            parameters. The columns encode the nucleus classification labels, first
+            embedding dimension value, and second embedding dimension value. Must have
+            the same index and no of rows as `feats`.
+        savedir: str
+            Directory to save model, figures, and other results.
+        pcoln: str
+            Name of column encoding classification label of nuclei in `clusts`.
+        ecoln0: str
+            Name of column encoding first embedding value for nuclei in `clusts`.
+        ecoln1: str
+            Name of column encoding second embedding value for nuclei in `clusts`.
+        classes_list: List
+            Optional, set of unique classification classes. Extracted automatically
+            if not provided.
+        fitkwargs: Dict
+            kwargs to pass to DecisionTreeRegressor. Default values used in the
+            DTALE paper are used if this parameter is not provided.
+
+        """
 
         # drop nans
         clusts = clusts.dropna(axis=0)
