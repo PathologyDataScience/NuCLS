@@ -1,4 +1,4 @@
-# NuCLS crowdsourcing and explainable AI modeling approach
+# NuCLS crowdsourcing and explainable deep-learning approach
 
 <img src="https://user-images.githubusercontent.com/22067552/140637808-3a827cc5-ff9e-44fe-973e-e4b7cf36a21c.png" width="100" />
 
