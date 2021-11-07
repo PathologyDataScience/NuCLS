@@ -34,8 +34,19 @@ def save_configs(configs_path, results_path, warn=True):
         f.write(repo.head.object.hexsha)
 
 
-def reverse_dict(d):
-    return {v: k for k, v in d.items()}
+def reverse_dict(d, preserve=False):
+    if not preserve:
+        # only return one key is two keys share the same value
+        return {v: k for k, v in d.items()}
+    else:
+        # values become list of keys that shared same value in original dict
+        new = {}
+        for k, v in d.items():
+            if v not in new:
+                new[v] = [k]
+            else:
+                new[v].append(k)
+        return new
 
 
 def ordered_vals_from_ordered_dict(d):

@@ -1,45 +1,32 @@
-# coding: utf-8
-
 import os
-import sys
-sys.path.append("../")
-
 import numpy as np
 from pandas import Series
-from imageio import (imread, imwrite)
-
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pylab as plt
-
-from Random_utils import (
-        reverse_dict, onehottify)
-from data_management import (
-    get_fov_bounds, get_imindices_str)
-from matplotlib.colors import ListedColormap
+from imageio import imread, imwrite
 import hickle as hkl
-
-from bootstrapping_utils import (
-    get_nuclei_from_region_prior, FC_CRF, 
-    occupy_full_GT_range, create_dir, 
-    get_shuffled_cmap, visualize_nuclei, 
-    )
 from skimage.filters import threshold_otsu, gaussian
 from scipy import ndimage
 from skimage.feature import peak_local_max
 from skimage.morphology import watershed
 from skimage.measure import regionprops
 
-#%%=======================================================================
-# Methods
-#%%=======================================================================
+import matplotlib
+matplotlib.use('agg')
+import matplotlib.pylab as plt
+from matplotlib.colors import ListedColormap
 
-#%%=======================================================================
+from GeneralUtils import reverse_dict
+from algorithmic_suggestions.data_management import (
+    get_fov_bounds, get_imindices_str
+)
+from algorithmic_suggestions.bootstrapping_utils import (
+    get_nuclei_from_region_prior, FC_CRF,
+    create_dir, get_shuffled_cmap, visualize_nuclei,
+)
+
+# =======================================================================
 # Paths and params
-#%%=======================================================================
 
-base_data_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/"
-#base_data_path = "C:/Users/tageldim/Desktop/WSI_Segmentation/Data/TCGAdataset/"
+base_data_path = "C:/Users/tageldim/Desktop/WSI_Segmentation/Data/TCGAdataset/"
 imagepath = base_data_path + "TCGA_TNBC_rgbImages/ductal_normalized/"
 labelpath = base_data_path + "TCGA_TNBC_2018-02-26/masks/core_set_151_slides/"
 hematoxylinpath = base_data_path + "seeds/seed_labels/hematoxylin/"
@@ -52,9 +39,8 @@ input_for_maskrcnn_path = base_data_path + "input_for_mrcnn/"
 input_for_maskrcnn_path_images = input_for_maskrcnn_path + "images/"
 input_for_maskrcnn_path_labels = input_for_maskrcnn_path + "labels/"
 
-# %%===========================================================================
+# ===========================================================================
 # constants
-# =============================================================================
 
 # note: we're only including classes we want to keep
 # these codes were obtained from the "BRCA_class_labels.tsv"
@@ -108,16 +94,21 @@ shift_step = 128
 min_n_instances = 3
 max_n_instances = 10000
 
-#%%=======================================================================
+#=======================================================================
 # Ground work
-#%%=======================================================================
 
 # Get list of images and labels
 htx_prefix = "hematoxylin_"
 label_prefix = "crowdsource_revision0_"
 imlist = [j.split(ext_imgs)[0] for j in os.listdir(imagepath) if ext_imgs in j]
-labellist = [j.split(label_prefix)[1].split(ext_lbls)[0]               for j in os.listdir(labelpath) if ext_lbls in j]
-htxlist = [j.split(htx_prefix)[1].split(ext_lbls)[0]             for j in os.listdir(hematoxylinpath) if ext_lbls in j]
+labellist = [
+    j.split(label_prefix)[1].split(ext_lbls)[0]
+    for j in os.listdir(labelpath) if ext_lbls in j
+]
+htxlist = [
+    j.split(htx_prefix)[1].split(ext_lbls)[0]
+    for j in os.listdir(hematoxylinpath) if ext_lbls in j
+]
 
 # create save path if nonexistent
 create_dir(mask_save_path)
@@ -141,9 +132,8 @@ im_label_list_all = [(imagepath + imname + ext_imgs,
 codes_new_df = Series(codes_new)
 codes_new_df.to_csv(mask_save_path + "codes_new.csv")
 
-#%%=======================================================================
+#=======================================================================
 # Define color maps
-#%%=======================================================================
 
 # A random colormap (for anything)
 cmap = get_shuffled_cmap(plt.cm.tab20)
@@ -172,30 +162,25 @@ clist = [
     ]
 cmap_classlabels = ListedColormap(clist)
 
-# %%===========================================================================
+# ===========================================================================
 # Iterate through unique slides and get relevant stats
-# =============================================================================
 
-#sldidx = 0; sldtuple = im_label_list_all[sldidx] # 9 is rotated
 for sldidx, sldtuple in enumerate(im_label_list_all):
 
     imname = sldtuple[0].split("/")[-1]
     print("\nslide %d of %d: %s" % (sldidx, len(im_label_list_all), imname))
     
-    # %%===========================================================================
     # Read data
-    # =============================================================================
-    
+
     print("\tReading image data and initial processing ...")
     
     im = imread(sldtuple[0], pilmode= "RGB")
     regions = imread(sldtuple[1], pilmode= "I")
     htx = imread(sldtuple[2], pilmode= "L")
-    
-    # %%===========================================================================
-    # Some label preprocessing    
-    # =============================================================================
-    
+
+    # ===========================================================================
+    # Some label preprocessing
+
     # map rare classes as needed (eg "angioinvasion" --> "mostly_tumor")
     for map_tuple in lbl_mapping:
         regions[regions == map_tuple[0]] = map_tuple[1]
@@ -208,25 +193,11 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
     # now re-code so that codes are contiguous
     for c in np.unique(regions):
         regions[regions == c] = code_rmap_dict[c]
-    
-    # %%===========================================================================
-    # visualize    
-    # =============================================================================
-    
-    ## occupy full GT range
-    #regions_disp = occupy_full_GT_range(regions, n_classes)
-    #
-    #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(15,15))
-    #ax1.imshow(im); ax1.set_title("RGB")
-    #ax2.imshow(im); 
-    #ax2.imshow(regions_disp, alpha=0.4, interpolation=None, cmap=cmap_classlabels); 
-    #ax2.set_title("Regions")
-    
-    # %%===========================================================================
+
+    # ===========================================================================
     # Fully Connected Conditional Random Fields -- regions
     # This is OPTIONAL -- seems to improve things a bit
-    # =============================================================================
-    
+
     print("\tFC-CRF to Refining region boundaries with CF-CRF ...")
     
     # zero will be mapped to an extra class -- only works this way!
@@ -250,48 +221,10 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
     # what was zero in original, should be zero in refined
     regions_refined[regions_refined == n_classes] = 0
     regions_refined[regions == 0] = 0
-    
-    # %%===========================================================================
-    # visualize    
-    # =============================================================================
-    
-    #regions_disp = occupy_full_GT_range(regions, n_classes)
-    #regions_refined_disp = occupy_full_GT_range(regions_refined, n_classes)
-    #
-    ## visualize result
-    ## ------------------
-    #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(15, 15))
-    #ax1.imshow(regions_refined_disp, cmap= cmap_classlabels)
-    #ax1.set_title('regions_refined')
-    #probability_graph = ax2.imshow(regions_disp, cmap= cmap_classlabels)
-    #ax2.set_title('regions')
-    #plt.show()
-    #
-    ## visualize subregions
-    ## ---------------------
-    #snapshots = [(500, 500, 1500, 1500), 
-    #             (1000, 1000, 2000, 2000),
-    #             (2500, 4000, 3500, 5000),
-    #            ]
-    #for snapshot in snapshots:  
-    #    (rmin, cmin, rmax, cmax) = snapshot
-    #    
-    #    # occupy full GT range
-    #    regions_refined_slice = occupy_full_GT_range(regions_refined[rmin:rmax,cmin:cmax], n_classes)
-    #    regions_slice = occupy_full_GT_range(regions[rmin:rmax,cmin:cmax], n_classes)
-    #    
-    #    plt.figure()
-    #    f, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
-    #    ax1.imshow(im[rmin:rmax,cmin:cmax])
-    #    ax2.imshow(im[rmin:rmax,cmin:cmax])
-    #    ax2.imshow(regions_refined_slice, cmap= cmap_classlabels, alpha=0.7, interpolation=None)
-    #    ax3.imshow(im[rmin:rmax,cmin:cmax])
-    #    ax3.imshow(regions_slice, cmap= cmap_classlabels, alpha=0.7, interpolation=None)
-    
-    # %%===========================================================================
-    # Get nucleus sugmentation/class using region priors and hematoxylin channel    
-    # =============================================================================
-    
+
+    # ===========================================================================
+    # Get nucleus sugmentation/class using region priors and hematoxylin channel
+
     print("\tGetting nucleus segmentation and class ...")
     
     # init nuclei semantic label channel -- init with region
@@ -318,27 +251,12 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
         nuclei_labels_init[nuclei_labels_init == c] = 0
         nuclei_labels_init = nuclei_labels_init + nuclei_thisregion
     
-    # %%===========================================================================
-    # visualize    
-    # =============================================================================
-    
-    ## occupy full GT range
-    #nuclei_disp = occupy_full_GT_range(nuclei_labels_init, n_classes)
-    #
-    #f, (ax1, ax2) = plt.subplots(1, 2, sharey=True, figsize=(15, 15))
-    #ax1.imshow(im); ax1.set_title("RGB")
-    #ax2.imshow(im); 
-    #ax2.imshow(nuclei_disp, alpha=0.7, interpolation=None, cmap=cmap_classlabels); 
-    #ax2.set_title("Nuclei class")
-    
-    #%% clear space
     del regions
     del regions_refined
-    
-    # %%===========================================================================
-    # Connected components and cleanup    
-    # =============================================================================
-    
+
+    # ===========================================================================
+    # Connected components and cleanup
+
     print("\tGetting connected components ...")
     
     try:
@@ -385,6 +303,7 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
             D = ndimage.distance_transform_edt(labels)
             localMax = peak_local_max(
                 D, indices=False, min_distance=10, labels=labels)
+
             # perform a connected component analysis on the local peaks,
             # using 8-connectivity, then appy the Watershed algorithm
             markers = ndimage.label(localMax, structure=np.ones((3, 3)))[0]
@@ -411,122 +330,9 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
     except MemoryError:
         print("\tMemory error encountered, moving on ...")
 
-
-    # %%===========================================================================
-    # visualize overall
-    # =============================================================================
-    
-    #visualize_nuclei(im= im, instance_mask= nuclei[..., 1], labels_mask= nuclei[..., 0], 
-    #                 cmaps= cmaps, figsize=(15,15))
-    
-    # %%===========================================================================
-    # visualize upclose
-    # =============================================================================
-    
-    #snapshots = [((3250, 3250, 3500, 3500), "tumor"),
-    #             ((500, 500, 750, 750), "lymphocyte"),
-    #             ((3250, 4750, 3500, 5000), "tumor"),
-    #             ((2500, 4000, 2750, 4250), "necrosis"),
-    #             ((3500, 1500, 3750, 1750), "stroma"),
-    #             ((3500, 1500, 3750, 1750), "lymphocyte"),
-    #             ((3000, 500, 3250, 750), "stroma"),
-    #            ]
-    #
-    #for snapshot in snapshots:  
-    #    (rmin, cmin, rmax, cmax) = snapshot[0]
-    #    classname = snapshot[1]
-    #    im_slice = im[rmin:rmax, cmin:cmax, :]
-    #    lbl_slice_original = nuclei_labels_init[rmin:rmax, cmin:cmax] == codes_new[classname]
-    #    
-    #    thislabel = 0 + (nuclei[rmin:rmax, cmin:cmax, 0] == codes_new[classname])
-    #    lbl_slice = nuclei[rmin:rmax, cmin:cmax, 1] * thislabel
-    #    
-    #    # use contiguous labels for better plotting
-    #    lbl_disp = np.zeros(lbl_slice.shape)
-    #    instances = list(np.unique(lbl_slice))
-    #    for i,j in enumerate(instances):
-    #        lbl_disp[lbl_slice == j] = i
-    #        
-    #    f, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
-    #    ax1.imshow(im_slice); ax1.set_title('RGB')
-    #    ax2.imshow(lbl_disp, cmap=cmaps[codes_new[classname]]); 
-    #    ax2.set_title("%s - %d instances" % (classname, len(instances)-1)) # zero is not an instance :)
-    #    ax3.imshow(lbl_slice_original, cmap=cmap); ax3.set_title("original") 
-    #    plt.show()
-    
-    # save snapshot to visualize improvement
-    # nuclei_intermediate = nuclei.copy()
-    
-    # %%===========================================================================
-    # visualize features to vet stroma nuclei
-    # =============================================================================
-    
-    ## NOTICE THE FOLLOWING PROBLEMS:
-    ## 1- lymphocytes in stromal regions are labeled as stroma cells (fibroblasts) -- of course, since they get their labels from the region
-    ## 2- clumped nuclei are detected together as one object
-    ## 3- some artifacts exist (minor and few)
-    ## So let's do some visualizations of features to help us handle some of these problems ...
-    #
-    #classname = "stroma"
-    #
-    #(rmin, cmin, rmax, cmax) = (3500, 1500, 3750, 1750)
-    #im_slice1 = im[rmin:rmax, cmin:cmax, :]
-    #thislabel = 0 + (nuclei[rmin:rmax, cmin:cmax, 0] == codes_new[classname])
-    #lbl_slice1 = nuclei[rmin:rmax, cmin:cmax, 1] * thislabel
-    #
-    #(rmin, cmin, rmax, cmax) = (3000, 500, 3250, 750)
-    #im_slice2 = im[rmin:rmax, cmin:cmax, :]
-    #thislabel = 0 + (nuclei[rmin:rmax, cmin:cmax, 0] == codes_new[classname])
-    #lbl_slice2 = nuclei[rmin:rmax, cmin:cmax, 1] * thislabel
-    #
-    ## Exctact features for all instances
-    ## see: https://en.wikipedia.org/wiki/Shape_factor_(image_analysis_and_microscopy)
-    ## and: http://scikit-image.org/docs/dev/api/skimage.measure.html#skimage.measure.regionprops
-    #props1 = regionprops(label_image= np.int32(lbl_slice1), coordinates='rc')
-    #props2 = regionprops(label_image= np.int32(lbl_slice2), coordinates='rc')
-    #
-    ## visualize -- props 1
-    #for prop in props1:
-    #    
-    #    # get elongation features
-    #    aspect = prop.minor_axis_length / prop.major_axis_length
-    #    circularity = (4 * np.pi * prop.area) / (prop.perimeter ** 2)
-    #
-    #    instance_mask = np.zeros(lbl_slice1.shape)
-    #    instance_mask[prop.coords[:,0], prop.coords[:,1]] = 1
-    #    
-    #    # mask background so you can overlay
-    #    instance_mask = np.ma.masked_where(instance_mask == 0, instance_mask)
-    #    
-    #    plt.figure()
-    #    plt.imshow(im_slice1)
-    #    plt.imshow(instance_mask, alpha=0.5, interpolation=None, cmap=cmap_single)
-    #    plt.title("Aspect Ratio = %.2f, circularity = %.2f, extent = %.2f, area = %.2f" % 
-    #              (aspect, circularity, prop.extent, prop.area))
-    #
-    ## visualize -- props 2
-    #for prop in props2:
-    #    
-    #    # get elongation features
-    #    aspect = prop.minor_axis_length / prop.major_axis_length
-    #    circularity = (4 * np.pi * prop.area) / (prop.perimeter ** 2)
-    #
-    #    instance_mask = np.zeros(lbl_slice2.shape)
-    #    instance_mask[prop.coords[:,0], prop.coords[:,1]] = 1
-    #    
-    #    # mask background so you can overlay
-    #    instance_mask = np.ma.masked_where(instance_mask == 0, instance_mask)
-    #    
-    #    plt.figure()
-    #    plt.imshow(im_slice2)
-    #    plt.imshow(instance_mask, alpha=0.5, interpolation=None, cmap=cmap_single)
-    #    plt.title("Aspect Ratio = %.2f, circularity = %.2f, extent = %.2f, area = %.2f" % 
-    #              (aspect, circularity, prop.extent, prop.area))
-    
-    # %%===========================================================================
+    # ===========================================================================
     # Refine stromal region region nuclei classification by region props
-    # =============================================================================
-    
+
     print("\tRefining stroma region nuclei classification using region props ...")
     
     # fibroblasts have low aspect ratio and circularity, while
@@ -582,10 +388,9 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
                 # by default if it raises a value error, it is likely an artifact 
                 nuclei[prop.coords[:,0], prop.coords[:,1], 0] = codes_new["background"]
 
-    # %%===========================================================================
+    # ===========================================================================
     # Get rid of non-round objects in non-stromal regions
-    # =============================================================================
-    
+
     # Note that the standards for non-stromal regions are different
     # from stromal regions because stroma regions were a "catch all"
     # background class that contains a mixture of (mostly) fibroblasts
@@ -634,9 +439,8 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
                 # by default if it raises a value error, it is likely an artifact 
                 nuclei[prop.coords[:,0], prop.coords[:,1], 0] = codes_new["background"]
 
-    # %%===========================================================================
+    # ===========================================================================
     # Final processing
-    # =============================================================================
 
     print("\tfinal processing ...")
     
@@ -661,67 +465,18 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
     del tmp_labels
     del tmp_instances
     
-    # %%===========================================================================
-    # visualize overall + save visualization
     # =============================================================================
-    
+    # visualize overall + save visualization
+
     print("\tvisualizing and saving ...")
     savename = mask_vis_save_path + imname.split(".")[0] + ".tif"
     visualize_nuclei(im= im, instance_mask= nuclei[..., 1], labels_mask= nuclei[..., 0], 
                      cmaps= cmaps, alpha_im= 0.7, alpha_nuclei= 0.7, figsize=(15,15), 
                      savename= savename, show= False)
-    
-    # %%===========================================================================
-    # visualize upclose
-    # =============================================================================
-    
-    #snapshots = [((3250, 3250, 3500, 3500), "tumor"),
-    #             ((500, 500, 750, 750), "lymphocyte"),
-    #             ((3250, 4750, 3500, 5000), "tumor"),
-    #             ((2500, 4000, 2750, 4250), "necrosis"),
-    #             ((3500, 1500, 3750, 1750), "stroma"),
-    #             ((3500, 1500, 3750, 1750), "lymphocyte"),
-    #             ((3000, 500, 3250, 750), "stroma"),
-    #            ]
-    #
-    #for snapshot in snapshots:  
-    #    (rmin, cmin, rmax, cmax) = snapshot[0]
-    #    classname = snapshot[1]
-    #    im_slice = im[rmin:rmax, cmin:cmax, :]
-    #    lbl_slice_original = nuclei_labels_init[rmin:rmax, cmin:cmax] == codes_new[classname]
-    #    
-    #    thislabel = 0 + (nuclei[rmin:rmax, cmin:cmax, 0] == codes_new[classname])
-    #    lbl_slice = nuclei[rmin:rmax, cmin:cmax, 1] * thislabel
-    #    
-    #    thislabel = 0 + (nuclei_intermediate[rmin:rmax, cmin:cmax, 0] == codes_new[classname])
-    #    lbl_slice_interm = nuclei_intermediate[rmin:rmax, cmin:cmax, 1] * thislabel
-    #    
-    #    # use contiguous labels for better plotting -- new
-    #    lbl_disp = np.zeros(lbl_slice.shape)
-    #    instances = list(np.unique(lbl_slice))
-    #    for i,j in enumerate(instances):
-    #        lbl_disp[lbl_slice == j] = i
-    #        
-    #    # use contiguous labels for better plotting -- intermediate
-    #    lbl_disp_interm = np.zeros(lbl_slice_interm.shape)
-    #    instances_interm = list(np.unique(lbl_slice_interm))
-    #    for i,j in enumerate(instances_interm):
-    #        lbl_disp_interm[lbl_slice_interm == j] = i
-    #    
-    #    f, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, sharey=True)
-    #    ax1.imshow(im_slice); ax1.set_title('RGB')
-    #    ax2.imshow(lbl_disp, cmap=cmaps[codes_new[classname]]); 
-    #    ax2.set_title("final\n%d instances" % (len(instances)-1)) # zero is not an instance :)
-    #    ax3.imshow(lbl_disp_interm, cmap=cmaps[codes_new[classname]]); 
-    #    ax3.set_title("interm\n%d instances" % (len(instances_interm)-1)) # zero is not an instance :)
-    #    ax4.imshow(lbl_slice_original, cmap=cmap); ax4.set_title("original") 
-    #    plt.suptitle(classname, fontsize=14, y=0.8)
-    #    plt.show()
-    
-    # %%===========================================================================
+
+    # ===========================================================================
     # Save mask
-    # =============================================================================
-    
+
     print("\tSaving mask as hickle binary ...")
     
     # convert to int32 for memory efficiency
@@ -732,35 +487,9 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
     with open(savename, 'w') as f:
         hkl.dump(nuclei, f) 
     
-    # %%===========================================================================
-    # Load mask
-    # =============================================================================
-    
-    # print("\tLoding mask from hickle binary ...")
-    
-    # # see: https://github.com/telegraphic/hickle
-    # savename = mask_save_path + imname.split(".")[0] + ".hkl"
-    # nuclei = hkl.load(savename) 
-    
-    # %%===========================================================================
-    # Show concept behind overlapping tiles
-    # =============================================================================
-    
-    ## The idea is to save tiles that overlap horizontally and vertically, so that:
-    ## During training: this acts augmentation
-    ## During inference: only keep predictions from the center of each tile so that
-    ## nuclei that lie at the edge between various tiles don't get misclassified.
-    ## in other words, nuclei get their predictions from tiles in which they are
-    ## located centrally
-    #
-    #tilingfig = "../ideas/tiling.png"
-    #plt.figure(figsize=(15,15))
-    #plt.imshow(plt.imread(tilingfig))
-    
-    # %%===========================================================================
+    # ===========================================================================
     # Divide into (potentially overlapping) FOVs and save
-    # =============================================================================
-    
+
     # Get FOV bounds
     (M, N, Depth) = im.shape
     FOV_bounds = get_fov_bounds(M, N, fov_dims=fov_dims, shift_step=shift_step)
@@ -839,9 +568,3 @@ for sldidx, sldtuple in enumerate(im_label_list_all):
         savename = savename_masks_base + fovbounds_str + ".hkl"
         with open(savename, 'w') as f:
             hkl.dump(mask_slice, f) 
-        
-        # # load mask (confirm it saved correctly)
-        # tmp = hkl.load(savename) 
-        # plt.figure(); plt.imshow(tmp[..., 0], cmap=cmap)
-        # plt.figure(); plt.imshow(tmp[..., 1], cmap=cmap)
-    
