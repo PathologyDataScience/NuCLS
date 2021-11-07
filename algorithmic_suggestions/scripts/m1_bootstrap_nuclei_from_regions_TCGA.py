@@ -15,8 +15,10 @@ import matplotlib.pylab as plt
 from matplotlib.colors import ListedColormap
 
 from GeneralUtils import reverse_dict
-from data_management import get_fov_bounds, get_imindices_str
-from bootstrapping_utils import (
+from algorithmic_suggestions.data_management import (
+    get_fov_bounds, get_imindices_str
+)
+from algorithmic_suggestions.bootstrapping_utils import (
     get_nuclei_from_region_prior, FC_CRF,
     create_dir, get_shuffled_cmap, visualize_nuclei,
 )
