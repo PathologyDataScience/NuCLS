@@ -1,49 +1,14 @@
-"""
-Mask R-CNN
-Train on the nuclei segmentation dataset from the
-Kaggle 2018 Data Science Bowl
-https://www.kaggle.com/c/data-science-bowl-2018/
-
-Licensed under the MIT License (see LICENSE for details)
-Written by Waleed Abdulla
-"""
-
-## Set matplotlib backend
-## This has to be done before other imports that might
-## set it, but only if we're running in script mode
-## rather than being imported.
-#if __name__ == '__main__':
-#    # import matplotlib
-#    # Agg backend runs without a display
-#    matplotlib.use('Agg')
-#    import matplotlib.pyplot as plt
-
 import os
 import sys
-#import json
-#import datetime
 import numpy as np
-#import skimage.io
-#from imgaug import augmenters as iaa
 import hickle as hkl
 
-# Root directory of the project
-ROOT_DIR = "/home/mohamedt/Desktop/WSI_Segmentation/Codes/mask_RCNN/"
-#ROOT_DIR = os.path.abspath("./../mask_RCNN/")
+from Mask_RCNN.mrcnn.config import Config
+from Mask_RCNN.mrcnn import utils
+from GeneralUtils import reverse_dict, AllocateGPU
 
-# Import Mask RCNN
-sys.path.append(ROOT_DIR)  # To find local version of the library
-sys.path.append(ROOT_DIR + "../")
-from mrcnn.config import Config
-from mrcnn import utils
-#from mrcnn import model as modellib
-#from mrcnn import visualize
-from Random_utils import reverse_dict
-from ProjectUtils import AllocateGPU
-
-#%% =================================================================
+# =================================================================
 #  Paths
-#=================================================================
 
 if os.getlogin() == 'tageldim':
     is_laptop = True
@@ -51,7 +16,7 @@ else:
     is_laptop = False
 
 # Path to trained weights file
-COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
+COCO_WEIGHTS_PATH = os.path.join('..', 'Mask_RCNN', "mask_rcnn_coco.h5")
 
 # Data directories    
 # DEFAULT_LOGS_DIR is the directory to save logs and model checkpoints, 
@@ -63,17 +28,11 @@ if is_laptop:
     labelpath = input_for_maskrcnn_path + "labels/"
 else:
     DEFAULT_LOGS_DIR = "/home/mohamedt/Desktop/WSI_Segmentation/tmp/"
-    
-    #input_for_maskrcnn_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/input_for_mrcnn/"
-    #imagepath = input_for_maskrcnn_path + "images/"
-    #labelpath = input_for_maskrcnn_path + "labels/"
-    
-    input_for_maskrcnn_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/extra_rgb_tiles_for_mrcnn_inference/"
+    input_for_maskrcnn_path = "C:/Users/tageldim/Desktop/TCGA_dataset/extra_rgb_tiles_for_mrcnn_inference/"
     imagepath = input_for_maskrcnn_path
     
-#%% =================================================================
+# =================================================================
 #  Dataset Configurations 
-#=================================================================
 
 class DatasetConfigs(object):
     
@@ -136,16 +95,14 @@ class DatasetConfigs(object):
             self.IMAGE_IDS = None
             self.IMAGE_IDS_VAL = None
 
-#%% =================================================================
+# =================================================================
 #  Configurations for training / inference
-#=================================================================
 
 class NucleusConfig(Config):
     """
     Configuration for the nucleus segmentation dataset.
     """    
     
-    #=============================================================
     # General maskrcnn training configurations
     
     LEARNING_RATE = 1e-4
@@ -194,8 +151,6 @@ class NucleusConfig(Config):
     # the RPN NMS threshold.
     TRAIN_ROIS_PER_IMAGE = 64 # 128 # 64 works  
     
-    #=============================================================
-    
     def __init__(self, is_training= True, verbose= True):
         """
         Override parent __init__()
@@ -203,12 +158,10 @@ class NucleusConfig(Config):
         # Give the configuration a recognizable name
         self.NAME = "nucleus"
         
-        #=============================================================
         # instantiate dataset configurations 
         self.is_training = is_training
         self.dataset_configs = DatasetConfigs(is_training= self.is_training)
         
-        #=============================================================
         # batch size and the what nots
 
         # Number of classes (including background)
@@ -250,7 +203,6 @@ class NucleusConfig(Config):
             # You can increase this during training to generate more propsals.
             self.RPN_NMS_THRESHOLD = 0.7
    
-        #=============================================================
         # Now set values of computed attributes (from parent's __init__)
         # Effective batch size
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT
@@ -265,9 +217,6 @@ class NucleusConfig(Config):
         # See compose_image_meta() for details
         self.IMAGE_META_SIZE = 1 + 3 + 3 + 4 + 1 + self.NUM_CLASSES
     
-#%% =================================================================
-#  Dataset
-#=================================================================
 
 class NucleusDataset(utils.Dataset):
     
@@ -285,8 +234,6 @@ class NucleusDataset(utils.Dataset):
         self.EXT_LBLS = config.dataset_configs.EXT_LBLS
         self.MAX_GT_INSTANCES = config.MAX_GT_INSTANCES
         
-    #=================================================================
-
     def load_nucleus(self, dataset_dir= None, subset= None, 
                      specific_ids= None):
         """
@@ -330,8 +277,6 @@ class NucleusDataset(utils.Dataset):
             self.add_image(
                 "nucleus", image_id= image_id,
                 path= imagepath + image_id + self.EXT_IMGS)
-
-    #=================================================================
     
     def load_mask(self, image_id):
         """Generate instance masks for an image.
@@ -368,8 +313,6 @@ class NucleusDataset(utils.Dataset):
         
         return mask, labels
     
-    #=================================================================
-    
     def image_reference(self, image_id):
         """Return the path of the image."""
         info = self.image_info[image_id]
@@ -377,121 +320,8 @@ class NucleusDataset(utils.Dataset):
             return info["id"]
         else:
             super(self.__class__, self).image_reference(image_id)
-            
-    
-#%%=================================================================
-#  Detection
-#=================================================================
 
-#def detect(model, results_dir, dataset_dir= None, subset= None):
-#    """Run detection on images in the given directory."""
-#    print("Running on {}".format(dataset_dir))
-#
-#
-#    # either dataset_dir or subset but not both (XOR)
-#    assert dataset_dir or subset
-#    assert not (dataset_dir and subset)
-#    assert subset in [None, "train", "val"]
-#
-#    # Create directory
-#    if not os.path.exists(results_dir):
-#        os.makedirs(results_dir)
-#    submit_dir = "submit_{:%Y%m%dT%H%M%S}".format(datetime.datetime.now())
-#    submit_dir = os.path.join(results_dir, submit_dir)
-#    os.makedirs(submit_dir)
-#
-#    # Read dataset
-#    dataset = NucleusDataset()
-#    dataset.load_nucleus(dataset_dir, subset)
-#    dataset.prepare()
-#    # Load over images
-#    submission = []
-#    for image_id in dataset.image_ids:
-#        # Load image and run detection
-#        image = dataset.load_image(image_id)
-#        # Detect objects
-#        r = model.detect([image], verbose=0)[0]
-#        # Encode image to RLE. Returns a string of multiple lines
-#        source_id = dataset.image_info[image_id]["id"]
-#        rle = mask_to_rle(source_id, r["masks"], r["scores"])
-#        submission.append(rle)
-#        # Save image with masks
-#        visualize.display_instances(
-#            image, r['rois'], r['masks'], r['class_ids'],
-#            dataset.class_names, r['scores'],
-#            show_bbox=False, show_mask=False,
-#            title="Predictions")
-#        plt.savefig("{}/{}.png".format(submit_dir, dataset.image_info[image_id]["id"]))
-#
-#    # Save to csv file
-#    submission = "ImageId,EncodedPixels\n" + "\n".join(submission)
-#    file_path = os.path.join(submit_dir, "submit.csv")
-#    with open(file_path, "w") as f:
-#        f.write(submission)
-#    print("Saved to ", submit_dir)
 
-#%%=================================================================
-#  RLE Encoding
-#=================================================================
-
-# def rle_encode(mask):
-#     """Encodes a mask in Run Length Encoding (RLE).
-#     Returns a string of space-separated values.
-#     """
-#     assert mask.ndim == 2, "Mask must be of shape [Height, Width]"
-#     # Flatten it column wise
-#     m = mask.T.flatten()
-#     # Compute gradient. Equals 1 or -1 at transition points
-#     g = np.diff(np.concatenate([[0], m, [0]]), n=1)
-#     # 1-based indicies of transition points (where gradient != 0)
-#     rle = np.where(g != 0)[0].reshape([-1, 2]) + 1
-#     # Convert second index in each pair to lenth
-#     rle[:, 1] = rle[:, 1] - rle[:, 0]
-#     return " ".join(map(str, rle.flatten()))
-
-# #%%=================================================================
-
-# def rle_decode(rle, shape):
-#     """Decodes an RLE encoded list of space separated
-#     numbers and returns a binary mask."""
-#     rle = list(map(int, rle.split()))
-#     rle = np.array(rle, dtype=np.int32).reshape([-1, 2])
-#     rle[:, 1] += rle[:, 0]
-#     rle -= 1
-#     mask = np.zeros([shape[0] * shape[1]], np.bool)
-#     for s, e in rle:
-#         assert 0 <= s < mask.shape[0]
-#         assert 1 <= e <= mask.shape[0], "shape: {}  s {}  e {}".format(shape, s, e)
-#         mask[s:e] = 1
-#     # Reshape and transpose
-#     mask = mask.reshape([shape[1], shape[0]]).T
-#     return mask
-# #%%=================================================================
-
-# def mask_to_rle(image_id, mask, scores):
-#     "Encodes instance masks to submission format."
-#     assert mask.ndim == 3, "Mask must be [H, W, count]"
-#     # If mask is empty, return line with image ID only
-#     if mask.shape[-1] == 0:
-#         return "{},".format(image_id)
-#     # Remove mask overlaps
-#     # Multiply each instance mask by its score order
-#     # then take the maximum across the last dimension
-#     order = np.argsort(scores)[::-1] + 1  # 1-based descending
-#     mask = np.max(mask * np.reshape(order, [1, 1, -1]), -1)
-#     # Loop over instance masks
-#     lines = []
-#     for o in order:
-#         m = np.where(mask == o, 1, 0)
-#         # Skip if empty
-#         if m.sum() == 0.0:
-#             continue
-#         rle = rle_encode(m)
-#         lines.append("{}, {}".format(image_id, rle))
-#     return "\n".join(lines)
-    
-#%%=================================================================
-#  Command line
 #=================================================================
     
 if __name__ == '__main__':
