@@ -6,6 +6,8 @@ from sqlalchemy import create_engine
 import numpy as np
 import subprocess
 from importlib.machinery import SourceFileLoader
+import warnings
+from sklearn.metrics import matthews_corrcoef
 
 
 def load_configs(configs_path, assign_name='cfg'):
@@ -32,6 +34,68 @@ def save_configs(configs_path, results_path, warn=True):
     repo = git.Repo(search_parent_directories=True)
     with open(opj(results_path, "last_commit_hash.txt"), 'w') as f:
         f.write(repo.head.object.hexsha)
+
+
+def calculate_mcc(truth, pred):
+    """
+    This is a wrapper around sklearn.metrics.mathews_corrcoef
+    that returns nan when it's not possible to calulate mcc instead of 0.
+    """
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("error", category=RuntimeWarning)
+        try:
+            return matthews_corrcoef(truth, pred)
+        except RuntimeWarning:
+            return np.nan
+
+
+# noinspection PyPep8Naming
+def calculate_4x4_statistics(TP, FP, FN, TN=None, add_eps_to_tn=True):
+    """Calculate simple stistics"""
+    ep = 1e-10
+    if TP == 0:
+        TP += ep
+    if FP == 0:
+        FP += ep
+    if FN == 0:
+        FN += ep
+    TN = 0 if TN is None else TN
+
+    stats = {'total': TP + FP + FN + TN}
+    stats.update({
+        'TP': TP,
+        'FP': FP,
+        'FN': FN,
+        'accuracy': (TP + TN) / stats['total'],
+        'precision': TP / (TP + FP),
+        'recall': TP / (TP + FN),
+    })
+    # add synonyms
+    stats.update({
+        'TPR': stats['recall'],
+        'sensitivity': stats['recall'],
+        'F1': (2 * stats['precision'] * stats['recall']) / (
+                stats['precision'] + stats['recall']),
+    })
+    if TN >= 0:
+        if TN == 0:
+            if add_eps_to_tn:
+                TN += ep
+            else:
+                return stats
+        stats.update({
+            'TN': TN,
+            'specificity': TN / (TN + FP)
+        })
+        # add synonyms
+        stats['TNR'] = stats['specificity']
+
+        # mathiew's correlation coefficient
+        numer = TP * TN - FP * FN
+        denom = np.sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+        stats['MCC'] = numer / denom
+
+    return stats
 
 
 def reverse_dict(d, preserve=False):
