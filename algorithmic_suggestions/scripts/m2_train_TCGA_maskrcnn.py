@@ -1,34 +1,16 @@
 import os
-import sys
+import Mask_RCNN.mrcnn.model as modellib
+from Mask_RCNN.mrcnn import utils
 
-# Root directory of the project
-ROOT_DIR = "/home/mohamedt/Desktop/WSI_Segmentation/Codes/mask_RCNN"
-
-# Import Mask RCNN
-sys.path.append(ROOT_DIR)  # To find local version of the library
-import mrcnn.model as modellib
-#from mrcnn.config import Config
-from mrcnn import utils
-#from mrcnn import visualize
-#from mrcnn.model import log
-
-# other imports
-#import numpy as np
-#import cv2
-#import matplotlib
-#import matplotlib.pyplot as plt
-
-# Local path to trained weights file
-COCO_MODEL_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # Download COCO trained weights from Releases if needed
+COCO_MODEL_PATH = os.path.join('..', '..', 'Mask_RCNN', "mask_rcnn_coco.h5")
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
     
-import TCGA_nucleus as nucleus # UNCOMMENT ME !!!
+import algorithmic_suggestions.configs_for_AlgorithmicSuggestions_MaskRCNN as mrcnn_configs
 
-#%% =================================================================
+# =================================================================
 # Params
-#=================================================================
 
 # Directory to save logs and trained model
 MODEL_DIR = "/home/mohamedt/Desktop/WSI_Segmentation/Models/TCGA_maskrcnn/19July2018/"
@@ -42,52 +24,25 @@ if init_with == "weight_file":
     model_weights_path = "/home/mohamedt/Desktop/WSI_Segmentation/Models/TCGA_maskrcnn/19July2018/%s/%s" % (
         model_to_use, model_epoch)
 
-## Image augmentation
-## http://imgaug.readthedocs.io/en/latest/source/augmenters.html
-#augmentation = iaa.SomeOf((0, 2), [
-#    iaa.Fliplr(0.5),
-#    iaa.Flipud(0.5),
-#    iaa.OneOf([iaa.Affine(rotate=90),
-#               iaa.Affine(rotate=180),
-#               iaa.Affine(rotate=270)]),
-#    iaa.Multiply((0.8, 1.5)),
-#    iaa.GaussianBlur(sigma=(0.0, 5.0))
-#])
 augmentation = None
-
 n_epochs = 50
 
-#%% =================================================================
 # Configurations
-#=================================================================
-
-config_train = nucleus.NucleusConfig(is_training= True)
+config_train = mrcnn_configs.NucleusConfig(is_training= True)
 config_train.display()
 
-#%% =================================================================
-# Dataset
-#=================================================================
-
 # Training dataset
-dataset_train = nucleus.NucleusDataset(config= config_train)
+dataset_train = mrcnn_configs.NucleusDataset(config= config_train)
 dataset_train.load_nucleus(subset= "train")
 dataset_train.prepare()
 
 # Validation dataset
-dataset_val = nucleus.NucleusDataset(config= config_train)
+dataset_val = mrcnn_configs.NucleusDataset(config= config_train)
 dataset_val.load_nucleus(subset= "val")
 dataset_val.prepare()
 
-# # Load and display random samples
-# image_ids = np.random.choice(dataset_train.image_ids, 4)
-# for image_id in image_ids:
-#     image = dataset_train.load_image(image_id)
-#     mask, class_ids = dataset_train.load_mask(image_id)
-#     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
-
-#%% =================================================================
+# =================================================================
 # Create model
-#=================================================================
 
 # Create model in training mode
 model = modellib.MaskRCNN(mode="training", config= config_train,
@@ -111,18 +66,8 @@ elif init_with == "weight_file":
     print("Loading weights from", model_weights_path)
     model.load_weights(model_weights_path, by_name=True)
 
-#%% =================================================================
+# =================================================================
 # Training
-#=================================================================
-
-# Train in two stages:
-# 1- Only the heads. Here we're freezing all the backbone layers and training 
-#    only the randomly initialized layers (i.e. the ones that we didn't use 
-#    pre-trained weights from MS COCO). To train only the head layers, 
-#    pass layers='heads' to the train() function.
-# 2- Fine-tune all layers. For this simple example it's not necessary, 
-#    but we're including it to show the process. Simply pass layers="all 
-#    to train all layers.
 
 # Train the head branches
 # Passing layers="heads" freezes all layers except the head
@@ -134,4 +79,3 @@ model.train(dataset_train, dataset_val,
             epochs= n_epochs,
             augmentation= augmentation,
             layers='heads')
-

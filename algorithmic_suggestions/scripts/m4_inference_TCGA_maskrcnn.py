@@ -1,42 +1,24 @@
 import argparse
 import os
-import sys
 import numpy as np
 import hickle as hkl
-# import tensorflow as tf
 from pandas import DataFrame as df
 import time
 
-# import matplotlib.pylab as plt
-# %matplotlib inline
-
-# Root directory of the project
-ROOT_DIR = "/home/mohamedt/Desktop/WSI_Segmentation/Codes/mask_RCNN/"
-sys.path.append(ROOT_DIR)  # To find local version of the library
-sys.path.append(ROOT_DIR + "../")
-sys.path.append(ROOT_DIR + "../WSI_Annotation/")
-
-# Import Mask RCNN
-import mrcnn.model as modellib
-
-import TCGA_nucleus as nucleus 
-from maskrcnn_utils_local import (
+import Mask_RCNN.mrcnn.model as modellib
+import algorithmic_suggestions.configs_for_AlgorithmicSuggestions_MaskRCNN as mrcnn_configs
+from algorithmic_suggestions.maskrcnn_utils_local import (
     convert_mask_to_three_channels, discard_edge_nuclei,
     add_contour_channel, add_nucleus_info_to_df)
-from WSI_Annotation.SQLite_Methods import SQLite_Methods
-from WSI_Annotation.general_utils import parse_coords_to_csv, list_to_str
+from algorithmic_suggestions.SQLite_Methods import SQLite_Methods
 
-#%% =================================================================
+# ==================================================================
 # Params
-#=================================================================
 
 model_to_use = "nucleus20180720T1413"
 model_epoch = "mask_rcnn_nucleus_0030.h5"
 model_epoch_short = model_epoch.split("_")[-1].split(".h5")[0]
-
-#image_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/input_for_mrcnn/images/"
-image_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/extra_rgb_tiles_for_mrcnn_inference/"
-
+image_path = "/home/mohamedt/Desktop/WSI_Segmentation/TCGA_dataset/inages/"
 model_weights_path = "/home/mohamedt/Desktop/WSI_Segmentation/Models/TCGA_maskrcnn/19July2018/%s/%s" % (
     model_to_use, model_epoch)
 
@@ -58,9 +40,8 @@ logs_dir = "/home/mohamedt/Desktop/WSI_Segmentation/Models/TCGA_maskrcnn/tmp/"
 max_trial = 10
 wait_seconds = 30
 
-#%%============================================================================
+# ==================================================================
 # Ground work
-#==============================================================================
 
 # Parse command line arguments
 # to get number og gpus and which subset to predict
@@ -112,17 +93,16 @@ if n_gpus > 1:
     image_ids = image_ids[subset_bounds[subset]:subset_bounds[subset+1]]
     
     
-#%%============================================================================
+# ==================================================================
 # Prep for maskRCNN inference
-#==============================================================================
 
 # Inference Configuration
-config_inference = nucleus.NucleusConfig(
+config_inference = mrcnn_configs.NucleusConfig(
     is_training= False, verbose=verbose)
 if verbose: config_inference.display()
     
 # load dataset
-dataset = nucleus.NucleusDataset(config= config_inference)
+dataset = mrcnn_configs.NucleusDataset(config= config_inference)
 dataset.load_nucleus(specific_ids= image_ids)
 dataset.prepare()
 
@@ -141,21 +121,11 @@ idx_bounds = list(np.arange(0, n_images_tot, config_inference.BATCH_SIZE))
 if idx_bounds[-1] != n_images_tot:
     idx_bounds.append(n_images_tot)
     
-#%%============================================================================
+# ==================================================================
 # Now go through batches and do inference
-#==============================================================================
 
 n_batches = len(idx_bounds) -1
 for batch_idx in range(n_batches):
-
-    # TEMP -- REMOVE ME!!! ------------------------------
-    if (subset == 0) and (batch_idx < 297):
-        continue
-    if (subset == 1) and (batch_idx < 403):
-        continue
-    if (subset == 2) and (batch_idx < 2666):
-        continue
-    # ---------------------------------------------------
 
     if verbose: print("Batch %d of %d" % (batch_idx, n_batches-1))
 
@@ -190,9 +160,8 @@ for batch_idx in range(n_batches):
         "boundary_relative_to_slide_y_coords",
     ])
     
-    #%% =================================================================
+    # ==================================================================
     # Save coords for all instances in each image in batch
-    #=================================================================
 
     for imidx in range(len(r)):
 
@@ -224,10 +193,9 @@ for batch_idx in range(n_batches):
         print("\tno nuclei detected.")
         continue
 
-    #%% =================================================================
+    # ==================================================================
     # Flush batch df into sqlite database
-    #=================================================================
-    
+
     # add annotations to database -- trying again if locked
     for trial in range(1, max_trial+1):
         try:
@@ -260,9 +228,3 @@ for batch_idx in range(n_batches):
                 time.sleep(wait_seconds) 
             else:
                 raise Exception("Tried too many times and failed to commit to database/")
-        
-    #%% =================================================================
-    # 
-    #=================================================================
-
-

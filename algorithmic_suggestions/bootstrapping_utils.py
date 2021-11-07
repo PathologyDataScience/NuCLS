@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import cv2
-from skimage.filters import threshold_otsu, gaussian
+from skimage.filters import threshold_otsu
 
 import matplotlib
 matplotlib.use('agg')

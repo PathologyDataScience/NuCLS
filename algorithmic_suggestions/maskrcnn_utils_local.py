@@ -1,21 +1,9 @@
-import os
 import numpy as np
-import hickle as hkl
-
-import sys
-sys.path.append("../")
-sys.path.append("../mask_RCNN")
-import TCGA_nucleus as nucleus
-from Random_utils import reverse_dict
-
+from GeneralUtils import reverse_dict
 from skimage.measure import find_contours
-
 import random
 import string
 
-#%% =================================================================
-# constants
-#=================================================================
 
 CODE_MAP = {
     "background":  0, 
@@ -28,9 +16,6 @@ CODE_MAP = {
 }
 CODE_MAP_REVERSE = reverse_dict(CODE_MAP)
 
-#%% =================================================================
-# convert_mask_to_two_channels
-#=================================================================
 
 def convert_mask_to_three_channels(mask_loaded, class_ids, scores):
     """
@@ -70,9 +55,6 @@ def convert_mask_to_three_channels(mask_loaded, class_ids, scores):
     # save as float 32 because we want confidence to be preserved
     return mask.astype(np.float32)
 
-#%% =================================================================
-# discard_edge_nuclei
-#=================================================================
 
 def discard_edge_nuclei(mask, edge= 64, keep_threshold = 0.5):
     """
@@ -117,9 +99,6 @@ def discard_edge_nuclei(mask, edge= 64, keep_threshold = 0.5):
 
     return mask
 
-#%% =================================================================
-# discard_edge_nuclei
-#=================================================================
 
 def add_contour_channel(mask):
     """
@@ -174,9 +153,6 @@ def add_contour_channel(mask):
 
     return mask
 
-#%% =================================================================
-# add_nucleus_info_to_df
-#=================================================================
 
 def add_nucleus_info_to_df(Annots_DF, iminfo, mask):
     """
@@ -250,8 +226,3 @@ def add_nucleus_info_to_df(Annots_DF, iminfo, mask):
         dfpos += 1
     
     return Annots_DF
-
-#%% =================================================================
-# 
-#=================================================================
-

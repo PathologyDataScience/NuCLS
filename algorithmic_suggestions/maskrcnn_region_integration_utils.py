@@ -1,43 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Aug  3 18:19:45 2018
-
-@author: tageldim
-"""
-
-#import os
-import sys
-sys.path.append("../")
-
 import numpy as np
-from pandas import Series, DataFrame as df, read_csv, concat
-#from imageio import (imread, imwrite)
-
-# import matplotlib
-# matplotlib.use('agg')
-#import matplotlib.pylab as plt
-#import matplotlib.patches as patches
-
+from pandas import DataFrame as df, concat
 import random
 import string
 from skimage.measure import regionprops
 
-#from Random_utils import (
-#        reverse_dict, onehottify)
-from data_management import (
-    get_fov_bounds, get_imindices_str)
-#from matplotlib.colors import ListedColormap
-#import hickle as hkl
+from algorithmic_suggestions.data_management import get_fov_bounds
+from algorithmic_suggestions.SQLite_Methods import SQLite_Methods
 
-#from bootstrapping_utils import (
-#    FC_CRF, occupy_full_GT_range, create_dir, 
-#    get_shuffled_cmap, visualize_nuclei, 
-#    )
-from WSI_Annotation.SQLite_Methods import SQLite_Methods
-
-#%%=======================================================================
-# preprocess_mrcnn_output_tile
-#=======================================================================
 
 def preprocess_mrcnn_output_tile(tile, instance_bias):
     """
@@ -72,10 +41,7 @@ def preprocess_mrcnn_output_tile(tile, instance_bias):
     
     return tile
 
-#%%=======================================================================
-# reconcile_mrcnn_with_regions
-#=======================================================================
-    
+
 def reconcile_mrcnn_with_regions(
         mrcnn, regions, codes_region, code_rmap_dict, 
         KEEP_CLASSES_CODES):
@@ -127,9 +93,6 @@ def reconcile_mrcnn_with_regions(
     
     return mrcnn
 
-#%%=======================================================================
-# get_nuclei_props_and_outliers
-#=======================================================================
 
 def get_nuclei_props_and_outliers(
     imname, mrcnn, props_fraction, ignore_codes=[0,]):
@@ -332,9 +295,6 @@ def get_nuclei_props_and_outliers(
     
     return Annots_DF, extreme_nuclei, segmentation_artifacts
 
-# %%===========================================================================
-# get_discordant_nuclei
-# =============================================================================
 
 def get_discordant_nuclei(mrcnn, regions, ignore_codes=[0,]):
     """
@@ -356,10 +316,7 @@ def get_discordant_nuclei(mrcnn, regions, ignore_codes=[0,]):
     discordant_nuclei = [int(j) for j in np.unique(discordant) if j != 0]
     return discordant_nuclei
 
-#%%=======================================================================
-# get_fov_stats
-#=======================================================================
-    
+
 def get_fov_stats(mrcnn, low_confidence, discordant, 
                   extreme, artifacts, 
                   roi_mask= None, keep_thresh = 0.5,
@@ -459,10 +416,7 @@ def get_fov_stats(mrcnn, low_confidence, discordant,
         
     return FOV_stats.dropna()
 
-#%%=======================================================================
-# choose_fovs_for_review
-#=======================================================================
-    
+
 def choose_fovs_for_review(FOV_stats, im_shape, min_nuclei_per_fov= 10, 
                            fovs_per_prop= 3, exclude_edge= 128):
     """
@@ -529,10 +483,7 @@ def choose_fovs_for_review(FOV_stats, im_shape, min_nuclei_per_fov= 10,
     
     return review_fovs
 
-#%%=======================================================================
-# choose_fovs_for_review_stratified
-#=======================================================================
-    
+
 def choose_fovs_for_review_stratified(
     FOV_stats, im_shape, min_nuclei_per_fov= 10, 
     fovs_per_prop= 3, exclude_edge= 128, 
@@ -574,9 +525,6 @@ def choose_fovs_for_review_stratified(
                 axis=0, sort= False, ignore_index= True)
     return review_fovs
 
-#%%=======================================================================
-# add_annots_and_fovs_to_db
-#=======================================================================
 
 def add_annots_and_fovs_to_db(
     Annots_DF, sqlite_save_path, review_fovs= None, 
@@ -625,9 +573,3 @@ def add_annots_and_fovs_to_db(
     
     # close
     sql.close_connection()
-
-#%%=======================================================================
-# 
-#=======================================================================
-
-

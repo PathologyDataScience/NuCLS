@@ -1,62 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug  6 10:20:46 2018
-
-@author: tageldim
-"""
-
 import os
-import sys
-sys.path.append("../")
-
 import numpy as np
-from pandas import Series, DataFrame as df, read_csv, concat
-from imageio import (imread, imwrite)
-
-# import matplotlib
-# matplotlib.use('agg')
+from pandas import Series, read_csv
+from imageio import imread
 import matplotlib.pylab as plt
-#import matplotlib.patches as patches
-
-#from skimage.measure import regionprops
-
-from Random_utils import (
-        reverse_dict, onehottify)
-#from data_management import (
-#    get_fov_bounds, get_imindices_str)
 from matplotlib.colors import ListedColormap
 import hickle as hkl
 
-from bootstrapping_utils import (
-    FC_CRF, occupy_full_GT_range, create_dir, 
-    get_shuffled_cmap, visualize_nuclei, 
+from GeneralUtils import reverse_dict
+from algorithmic_suggestions.bootstrapping_utils import (
+    create_dir, get_shuffled_cmap
 )
-
-from maskrcnn_region_integration_utils import (
+from algorithmic_suggestions.maskrcnn_region_integration_utils import (
     preprocess_mrcnn_output_tile, reconcile_mrcnn_with_regions, 
     get_nuclei_props_and_outliers, get_discordant_nuclei, 
-    get_fov_stats, choose_fovs_for_review, 
-    choose_fovs_for_review_stratified, 
+    get_fov_stats, choose_fovs_for_review_stratified,
     add_annots_and_fovs_to_db,
 )
 
-#import random
-#import string
-
-#%%=======================================================================
-# Methods
-#=======================================================================
-
-
-#%%=======================================================================
+# ========================================================================
 # Paths and params
-#=======================================================================
 
-base_data_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/"
-#base_data_path = "C:/Users/tageldim/Desktop/WSI_Segmentation/Data/TCGAdataset/"
-
+base_data_path = "C:/Users/tageldim/Desktop/WSI_Segmentation/Data/TCGAdataset/"
 base_save_path = "/home/mohamedt/Desktop/WSI_Segmentation/Results/TCGA_maskrcnn/19July2018/nucleus20180720T1413_0030/"
-
 imagepath = base_data_path + "TCGA_TNBC_rgbImages/ductal_normalized/"
 region_mask_path = base_data_path + "TCGA_TNBC_2018-02-26/masks/core_set_151_slides/"
 mrcnn_mask_path = base_save_path + "mrcnn_preds/"
@@ -70,9 +35,8 @@ codes_regions_path = base_data_path + "TCGA_TNBC_2018-02-26/BRCA_class_labels.ts
 
 ext_imgs= ".png"
 
-# %%===========================================================================
+# ========================================================================
 # constants
-# =============================================================================
 
 # read region codes
 # This is the meaning of pixel labels in region-level output
@@ -91,9 +55,8 @@ fovs_per_prop_review = 10
 exclude_edge= 128
 min_nuclei_per_fov = 10
 
-# %%===========================================================================
+# ========================================================================
 # Ground work
-# =============================================================================
 
 # convert to dict and remove prepended "mostly_"
 codes_region = dict(codes_region["GT_code"])
@@ -161,9 +124,8 @@ relevant_labels_for_fov_choice = [
 # codes to ignore when getting nuclei for review
 ignore_codes = [0, codes_region["necrosis_or_debris"]]
 
-#%%=======================================================================
+# ========================================================================
 # Further ground work
-#=======================================================================
 
 print("Getting list of images and some ground work ...")
 
@@ -189,9 +151,8 @@ im_list = [j for j in im_list if j not in already_done]
 codes_region_df = Series(codes_region)
 codes_region_df.to_csv(base_save_path + "gtruth_codes.csv")
 
-#%%=======================================================================
+# ========================================================================
 # Define color maps
-#=======================================================================
 
 # A random colormap (for anything)
 cmap = get_shuffled_cmap(plt.cm.tab20)
@@ -221,35 +182,20 @@ clist[codes_region['necrosis_or_debris']] = 'yellow'
 cmap_classlabels = ListedColormap(clist)
 n_classes = len(clist)
 
-# %%===========================================================================
+# ========================================================================
 # Iterate through unique slides
-# =============================================================================
 
-#imidx = 0; imname = im_list[imidx] # 11 is rotated ROI
 for imidx, imname in enumerate(im_list):
-    
-    # TEMP !!!! -----
-    #if imidx < 4:
-    #    continue
-    # ---------------
-    
+
     print("\nslide %d of %d: %s" % (imidx, len(im_list), imname))
     
-    # %%===========================================================================
     # Read ROI
-    # =============================================================================
-    
     print("\tReading RGB and region mask images ...")
-    
     im = imread(imagepath + imname + ext_imgs, pilmode= "RGB")
     regions = imread(region_mask_path + region_prefix + imname + ".png", pilmode= "I")
     
-    # %%===========================================================================
     # Read maskrcnn output for this slide
-    # =============================================================================
-    
     print("\tReading mrcnn predictions for this slide ...")
-    
     if imname not in mrcnn_list:
         print("\t\tSlide not predicted by mrcnn! moving on!")
         continue
@@ -290,22 +236,16 @@ for imidx, imname in enumerate(im_list):
         # assign to mask
         mrcnn[rowmin:rowmax, colmin:colmax, :] = patch
         
-    # %%===========================================================================
     # Reconcile mrcnn predictions with regions
-    # =============================================================================
-    
     print("\tReconciling mrcnn predictions with regions...")
-    
     mrcnn = reconcile_mrcnn_with_regions(
         mrcnn=mrcnn, regions=regions, 
         codes_region= codes_region, 
         code_rmap_dict= code_rmap_dict, 
         KEEP_CLASSES_CODES= KEEP_CLASSES_CODES)
     
-    # %%===========================================================================
     # Get nuclei stats
-    # =============================================================================
-    
+
     # get nucleus annotation dataframe as well as outlier nuclei
     print("\tGetting nuclei dataframe as well as outlier nuclei")
     Annots_DF, extreme_nuclei, segmentation_artifacts = get_nuclei_props_and_outliers(
@@ -336,10 +276,8 @@ for imidx, imname in enumerate(im_list):
     low_confidence = mrcnn[..., 2] < confidence_thresh
     low_confidence[mrcnn[..., 0] == 0] = 0
     
-    # %%===========================================================================
     # Divide into FOV proposals and choose fovs for review
-    # =============================================================================
-    
+
     print("\tGetting fov stats")
     FOV_stats = get_fov_stats(
         mrcnn=mrcnn, low_confidence=low_confidence, discordant=discordant, 
@@ -379,10 +317,3 @@ for imidx, imname in enumerate(im_list):
         Annots_DF= Annots_DF, review_fovs= review_fovs, 
         sqlite_save_path= sqlite_save_path, 
         create_tables= imidx == 0)    
-    
-# %%===========================================================================
-# 
-# =============================================================================
-    
-    
-  
