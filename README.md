@@ -2,7 +2,7 @@
 
 <img src="https://user-images.githubusercontent.com/22067552/140637808-3a827cc5-ff9e-44fe-973e-e4b7cf36a21c.png" width="100" />
 
-This repository contains the codebase corresponding to the following preprint:
+This repository contains the codebase corresponding to the following two papers:
 
 _Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Alhusseiny AM, AlMoslemany MA, Elmatboly AM, Pappalardo PA, Sakr RA. **NuCLS: A scalable crowdsourcing approach & dataset for nucleus classification and segmentation in breast cancer.** (Under reveiw). (Access [ArXiv preprint](https://arxiv.org/abs/2102.09099))
 
