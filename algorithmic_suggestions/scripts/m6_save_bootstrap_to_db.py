@@ -1,38 +1,23 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug  6 10:20:46 2018
-
-@author: tageldim
-"""
-
 import os
-import sys
-sys.path.append("../")
-
 import numpy as np
 from pandas import Series, DataFrame as df, read_csv, concat
 from imageio import (imread, imwrite)
-
-# import matplotlib
-# matplotlib.use('agg')
 import matplotlib.pylab as plt
 import matplotlib.patches as patches
-
 from skimage.measure import regionprops
-
-from Random_utils import (
-        reverse_dict, onehottify)
-from data_management import (
-    get_fov_bounds, get_imindices_str)
+import random
+import string
 from matplotlib.colors import ListedColormap
 import hickle as hkl
 
-from bootstrapping_utils import (
+from GeneralUtils import reverse_dict
+from data_management import (
+    get_fov_bounds, get_imindices_str)
+from algorithmic_suggestions.bootstrapping_utils import (
     FC_CRF, occupy_full_GT_range, create_dir, 
     get_shuffled_cmap, visualize_nuclei, 
 )
-
-from maskrcnn_region_integration_utils import (
+from algorithmic_suggestions.maskrcnn_region_integration_utils import (
     preprocess_mrcnn_output_tile, reconcile_mrcnn_with_regions, 
     get_nuclei_props_and_outliers, get_discordant_nuclei, 
     get_fov_stats, choose_fovs_for_review, 
@@ -40,12 +25,8 @@ from maskrcnn_region_integration_utils import (
     add_annots_and_fovs_to_db,
 )
 
-import random
-import string
-
-#%%=======================================================================
+# =======================================================================
 # Paths and params
-#=======================================================================
 
 base_data_path = "/mnt/Tardis/MohamedTageldin/TCGA_dataset/"
 #base_data_path = "C:/Users/tageldim/Desktop/WSI_Segmentation/Data/TCGAdataset/"
@@ -62,19 +43,14 @@ codes_regions_path = base_data_path + "TCGA_TNBC_2018-02-26/BRCA_class_labels.ts
 
 ext_imgs= ".png"
 
-# %%===========================================================================
-# constants
-# =============================================================================
-
 # read region codes
 # This is the meaning of pixel labels in region-level output
 # these codes were obtained from the "BRCA_class_labels.tsv"
 # file associated with the TCGA crowdsourcing dataset
 codes_region = read_csv(codes_regions_path, sep='\t', index_col= 0)
 
-# %%===========================================================================
+# ===========================================================================
 # further ground work
-# =============================================================================
 
 # convert to dict and remove prepended "mostly_"
 codes_region = dict(codes_region["GT_code"])
@@ -142,10 +118,6 @@ relevant_labels_for_fov_choice = [
 # codes to ignore when getting nuclei for review
 ignore_codes = [0, codes_region["necrosis_or_debris"]]
 
-#%%=======================================================================
-# Ground work
-#=======================================================================
-
 print("Getting list of images and some ground work ...")
 
 # read boostrapped nuclei to visualize differences from mrcnn
@@ -155,18 +127,15 @@ bootstrap_list = [j.split(".hkl")[0] for j in os.listdir(bootstrap_mask_path) if
 # create save path if nonexistent
 create_dir(sqlite_save_path_base)
 
-# %%===========================================================================
+# ===========================================================================
 # Iterate through unique slides
-# =============================================================================
 
-# imidx = 0; imname = bootstrap_list[imidx] # 11 is rotated ROI
 for imidx, imname in enumerate(bootstrap_list):
 
     print("\nslide %d of %d: %s" % (imidx, len(bootstrap_list), imname))
 
-    # %%===========================================================================
+    # ===========================================================================
     # Read ROI
-    # =============================================================================
 
     print("\tReading bootstrap mask image ...")
     bootstrap = hkl.load(bootstrap_mask_path + imname + ".hkl") 
@@ -181,18 +150,12 @@ for imidx, imname in enumerate(bootstrap_list):
     # add "fake" certainty channel
     bootstrap = np.concatenate((bootstrap, np.random.rand(bootstrap.shape[0], bootstrap.shape[1])[..., None]), axis= -1)
 
-    # %%===========================================================================
-    # get nucleus annotation dataframe as well as outlier nuclei
-    # =============================================================================
-
     print("\tGetting nuclei dataframe as well as outlier nuclei")
     Annots_DF, extreme_nuclei, segmentation_artifacts = get_nuclei_props_and_outliers(
         imname= imname, mrcnn= bootstrap, props_fraction= 0.1, 
         ignore_codes= ignore_codes)
 
-    # %%===========================================================================
     # Add flags for nuclei worth reviewing
-    # =============================================================================
 
     print("\tGetting outlier nuclei masks")
 
@@ -206,13 +169,9 @@ for imidx, imname in enumerate(bootstrap_list):
     Annots_DF.loc[segmentation_artifacts, "maybe_artifact_flag"] = 1
     artifacts = np.isin(bootstrap[..., 1], segmentation_artifacts)
 
-    # %%===========================================================================
     # add annotations and fovs to database
-    # =============================================================================
 
     add_annots_and_fovs_to_db(
         Annots_DF= Annots_DF, 
         sqlite_save_path= sqlite_save_path, 
         create_tables= imidx == 0)
-
-
