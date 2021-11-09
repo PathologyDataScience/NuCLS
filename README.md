@@ -37,3 +37,12 @@ We show how modifications to the widely used Mask R-CNN architecture, including 
 <img src="https://user-images.githubusercontent.com/22067552/140638638-1c3a3a14-c61d-43b7-ae9c-f0fabda981a7.png" width="600" />
 
 We introduce an explainability method called Decision Tree Approximation of Learned Embeddings (DTALE), which provides explanations for classification model behavior globally, as well as for individual nuclear predictions. DTALE explanations are simple, quantitative, and can flexibly use any measurable morphological features that make sense to practicing pathologists, without sacrificing model accuracy.
+
+-------------------------------------------------
+
+## Dataset Licensing
+This dataset itself is licensed under a [CC0 1.0 Universal (CC0 1.0) license](https://creativecommons.org/publicdomain/zero/1.0/). 
+We would appreciate it if you cite our paper if you use the data.
+
+## Code licensing
+Thise codebase is licensed with an MIT license.
