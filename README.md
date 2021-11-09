@@ -38,7 +38,6 @@ We show how modifications to the widely used Mask R-CNN architecture, including 
 
 We introduce an explainability method called Decision Tree Approximation of Learned Embeddings (DTALE), which provides explanations for classification model behavior globally, as well as for individual nuclear predictions. DTALE explanations are simple, quantitative, and can flexibly use any measurable morphological features that make sense to practicing pathologists, without sacrificing model accuracy.
 
--------------------------------------------------
 
 ## Dataset Licensing
 This dataset itself is licensed under a [CC0 1.0 Universal (CC0 1.0) license](https://creativecommons.org/publicdomain/zero/1.0/). 
