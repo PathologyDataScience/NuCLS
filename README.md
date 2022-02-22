@@ -18,63 +18,63 @@ Structure and high-level documentation of the repository is included below:
 
 ```
 │
-└─── Mask_RCNN @ 403afaf: This is our fork from the Matterport Mask-RCNN implementation. We used this implementation as-is to refine the algorithmic suggestions that the participants saw.
+└─── Mask_RCNN @ 403afaf : This is our fork from the Matterport Mask-RCNN implementation. We used this implementation as-is to refine the algorithmic suggestions that the participants saw.
 │
-└─── algorithmic_suggestions: Python methods and scripts used to generate the algorithmic suggestions. 
+└─── algorithmic_suggestions : Python methods and scripts used to generate the algorithmic suggestions. 
 |  |  
-│  └─── jupyter_notebooks: Walk-through examples of the steps used to suggestion generation and refinement.
-|  |    └─── jn1_inspect_bootstrapping_workflow_TCGA.ipynb: 
-|  |    └─── jn2_inspect_maskrcnn_training.ipynb
-|  |    └─── jn4_inspect_maskrcnn_inference.ipynb
-|  |    └─── jn5_inspect_integrate_maskrcnn_prediction_with_region_priors.ipynb
+│  └─── jupyter_notebooks : Walk-through examples of the steps used to suggestion generation and refinement.
+|  |    └─── jn1_inspect_bootstrapping_workflow_TCGA.ipynb : Sample walk-through from the generation of algorithmic suggestions using image processing.
+|  |    └─── jn2_inspect_maskrcnn_training.ipynb : Training the Matterport Mask R-CNN implementation.
+|  |    └─── jn4_inspect_maskrcnn_inference.ipynb : Inference using the Matterport Mask R-CNN model to produce refined algorithmic suggestions.
+|  |    └─── jn5_inspect_integrate_maskrcnn_prediction_with_region_priors.ipynb : Integrating region priors from the BCSS region annotation dataset to produce more sensible algorithmic suggestions.
 |  |    
-│  └─── scripts: python scripts used to generate bootstrapped suggestions using classical image processing, refine those suggestions using Mask R-CNN, further improve refinement by integrating region prior knowledge from the BCSS region annotation dataset, and saving the refined suggestions to a database to be shown to participants.
-|  |    └─── m1_bootstrap_nuclei_from_regions_TCGA.py
-|  |    └─── m2_train_TCGA_maskrcnn.py
-|  |    └─── m3_save_extra_TCGA_tiles_for_inference.py
-|  |    └─── m4_inference_TCGA_maskrcnn.py
-|  |    └─── m5_integrate_maskrcnn_prediction_with_region_priors.py
-|  |    └─── m6_save_bootstrap_to_db.py
+│  └─── scripts : python scripts used to generate bootstrapped suggestions using classical image processing, refine those suggestions using Mask R-CNN, further improve refinement by integrating region prior knowledge from the BCSS region annotation dataset, and saving the refined suggestions to a database to be shown to participants.
+|  |    └─── m1_bootstrap_nuclei_from_regions_TCGA.py : Obtaining nuclear boundaries and preliminary classification by bootstrapping using classical image processing.
+|  |    └─── m2_train_TCGA_maskrcnn.py : Training Matterport Mask R-CNN model.
+|  |    └─── m3_save_extra_TCGA_tiles_for_inference.py : Saving dataset for inference.
+|  |    └─── m4_inference_TCGA_maskrcnn.py : Inference using the Matterport Mask R-CNN model to produce refined algorithmic suggestions.
+|  |    └─── m5_integrate_maskrcnn_prediction_with_region_priors.py : Integrating region priors from the BCSS region annotation dataset to produce more sensible algorithmic suggestions.
+|  |    └─── m6_save_bootstrap_to_db.py : Saving predictions in coordinate-form into an SQLite database to be visualized through the HistomicsUI interface.
 │  |
-|  └─── SQLite_Methods.py
-|  └─── bootstrapping_utils.py
-|  └─── configs_for_AlgorithmicSuggestions_MaskRCNN.py
-|  └─── data_management.py
-|  └─── maskrcnn_region_integration_utils.py
-|  └─── maskrcnn_utils_local.py 
+|  └─── SQLite_Methods.py : Methods for SQLite databse parsing.
+|  └─── bootstrapping_utils.py : Methods for generating algorithmic suggestions using classical image processing.
+|  └─── configs_for_AlgorithmicSuggestions_MaskRCNN.py : Configurations used for the Matterport Mask R-CNN implementation.
+|  └─── data_management.py : utilities used for data management and wrangling.
+|  └─── maskrcnn_region_integration_utils.py : Methods used for integrating region priors to improve refined suggestions.
+|  └─── maskrcnn_utils_local.py : Other utilities to facilitate Mas R-CNN training.
 │
-└─── configs: configurations used, including color and ground truth codes
-|  └─── nucleus_GTcodes.csv
-|  └─── nucleus_model_configs.py
-|  └─── nucleus_style_defaults.py
+└─── configs : configurations used, including color and ground truth codes
+|  └─── nucleus_GTcodes.csv : Ground truth codes for forming nucleus masks.
+|  └─── nucleus_model_configs.py : Configurations used for the NuCLS model (our modified Mask R-CNN implementation, as described in the Bioinformatics paper).
+|  └─── nucleus_style_defaults.py : Color coding scheme and other configurations used.
 |
-└─── interrater: Python methods and scripts used for the interrater and intra-rater analysis.
+└─── interrater : Python methods and scripts used for the interrater and intra-rater analysis.
 |  |  
-│  └─── scripts: scripts used to perform the interrater and intra-rater analysis and plots
-|  |    └─── i1_get_all_nucleus_anchors.py
-|  |    └─── i1b_get_krippendorph_summary.py
-|  |    └─── i1c_get_accuracy_stats.py
-|  |    └─── i1d_get_interrater_and_intrarater_stats.py
-|  |    └─── i1e_run_NPs_accuracy_simulations.py
-|  |    └─── i1f_parse_anchors_dataset.py
-|  |    └─── i2_show_effect_of_constrained_clustering.py
-|  |    └─── i3_get_anchor_composition_summary.py
-|  |    └─── i4_get_detection_and_classification_tally.py
-|  |    └─── i5_plot_participant_accuracy_stats.py
-|  |    └─── i6_plot_segmentation_accuracy_stats.py
-|  |    └─── i7_plot_participant_confusion.py
-|  |    └─── i8_plot_intrarater_stats.py
-|  |    └─── i9_plot_interrater_stats.py
-|  |    └─── i10_plot_krippendorph_summary.py
-|  |    └─── i11_plot_NPs_accuracy_simulations.py
-|  |    └─── i12_statistical_tests.py
+│  └─── scripts : scripts used to perform the interrater and intra-rater analysis and plots
+|  |    └─── i1_get_all_nucleus_anchors.py : Obtain nucleus anchors using constrained agglomerative clustering and infer classification truth using expectation-maximization.
+|  |    └─── i1b_get_krippendorph_summary.py : Ontaing Krippendorph alpha interrater agreement statistics
+|  |    └─── i1c_get_accuracy_stats.py : Obtain detection accuracy statistics for individual participants and vaarious participant groups.
+|  |    └─── i1d_get_interrater_and_intrarater_stats.py :  Obtain interrater and intrarater agreement statistics for detection and classification.
+|  |    └─── i1e_run_NPs_accuracy_simulations.py : Run simulations to determine minimal number of participants needed to achieve desired accuracy of inferred truth.
+|  |    └─── i1f_parse_anchors_dataset.py : Parse a ground truth dataset using consensus anchor locations and inferred true classifications.
+|  |    └─── i2_show_effect_of_constrained_clustering.py : Investigate the impact of clustering constraint in the constrained agglomerative clustering approach used.
+|  |    └─── i3_get_anchor_composition_summary.py : Get and plot a summary of the composition of the distribution and composition of inferred labels and classifications.
+|  |    └─── i4_get_detection_and_classification_tally.py : An extension of i3_get_anchor_composition_summary.py
+|  |    └─── i5_plot_participant_accuracy_stats.py : Plot participant accuracy results. 
+|  |    └─── i6_plot_segmentation_accuracy_stats.py : Plot segmentation accuracy of nuclei that were determined to have accurate algorithmically-suggested segmentation boundary.
+|  |    └─── i7_plot_participant_confusion.py : Plot confusion matrix of participant classifications.
+|  |    └─── i8_plot_intrarater_stats.py : Plot intrarater statistics (self-agreement).
+|  |    └─── i9_plot_interrater_stats.py : Plot interrater statistics.
+|  |    └─── i10_plot_krippendorph_summary.py : Plot Krippendorph alpha values.
+|  |    └─── i11_plot_NPs_accuracy_simulations.py : Plot the results of the simulations from i1e_run_NPs_accuracy_simulations.py
+|  |    └─── i12_statistical_tests.py : Run statistical tests to compare various results and obtain p-values.
 │  |
-|  └─── DawidAndSkene1979_EMGtruthInference.py
-|  └─── constrained_agglomerative_clustering.py
-|  └─── interrater_utils.py
-|  └─── krippendorff.py
+|  └─── DawidAndSkene1979_EMGtruthInference.py : This is code by Zheng et al, implementing the Expectation-Maximization based method for ground truth inference from multi-observer datasets, as proposed by Dawid and Skene in 1979.
+|  └─── constrained_agglomerative_clustering.py : Our constrained agglomerative clustering implementation. Please refer to the paper and function documentation for details.
+|  └─── interrater_utils.py : Various utilities to support the interrater analysis.
+|  └─── krippendorff.py : Modified from Samtiago Castro, based on Thomas Grill implementation. Works on Python 3.5+.
 │
-└─── nucls_model: Python methods used in our paper: "Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. Explainable nucleus classification using Decision Tree Approximation of Learned Embeddings. Bioinformatics. 2021 Sep 29."
+└─── nucls_model : Python methods used in our paper: "Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. Explainable nucleus classification using Decision Tree Approximation of Learned Embeddings. Bioinformatics. 2021 Sep 29."
 |  |  
 |  └─── torchvision_detection_utils
 |  |    └─── ... Minimally-modified methods from the official torchvision implimentation 
