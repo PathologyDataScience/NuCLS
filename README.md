@@ -100,6 +100,18 @@ Structure and high-level documentation of the repository is included below:
 ```
 __________________________________________________________________________
 
+## Requirements
+
+Conda specs are exported in the file `wsi-conda-env-specs.txt`, which can be used to generate a conda environment.
+
+Minimal requirements to run the interrater analysis: `numpy`, `scipy`, `pandas`, `sqlite`, `matplotlib`, and `seaborn`.
+Other requirements are needed for the algorithmic suggestion generation, including `HistomicTK`, `tensorflow`, and the Matterport Mask R-CNN implementation, included here as a fork.
+To run the NuCLS model (described out Bioinformatics paper), you also need `torch`.
+
+__________________________________________________________________________
+
+## Summary of contributions
+
 We describe the following contributions:
 
 ### 1. [NuCLS datasets](https://sites.google.com/view/nucls)  
