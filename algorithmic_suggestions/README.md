@@ -1,3 +1,4 @@
+```
 │
 └─── algorithmic_suggestions : Python methods and scripts used to generate the algorithmic suggestions. 
 |  |  
@@ -21,3 +22,5 @@
 |  └─── data_management.py : utilities used for data management and wrangling.
 |  └─── maskrcnn_region_integration_utils.py : Methods used for integrating region priors to improve refined suggestions.
 |  └─── maskrcnn_utils_local.py : Other utilities to facilitate Mas R-CNN training.
+
+```
