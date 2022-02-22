@@ -1,3 +1,4 @@
+```
 |
 └─── interrater : Python methods and scripts used for the interrater and intra-rater analysis.
 |  |  
@@ -25,3 +26,4 @@
 |  └─── interrater_utils.py : Various utilities to support the interrater analysis.
 |  └─── krippendorff.py : Modified from Samtiago Castro, based on Thomas Grill implementation. Works on Python 3.5+.
 │
+```
