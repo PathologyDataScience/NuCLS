@@ -8,6 +8,98 @@ _Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Alhusseiny AM
 
 _Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. **Explainable nucleus classification using Decision Tree Approximation of Learned Embeddings.** Bioinformatics. 2021 Sep 29._
 
+Please consult these papers for details on the context in which these scripts and methods were used in our research to generate and analyse the NuCLS dataset.
+
+__________________________________________________________________________
+
+## Repository structure
+
+Structure and high-level documentation of the repository is included below:
+
+```
+│
+└─── Mask_RCNN @ 403afaf: This is our fork from the Matterport Mask-RCNN implementation. We used this implementation as-is to refine the algorithmic suggestions that the participants saw.
+│
+└─── algorithmic_suggestions: Python methods and scripts used to generate the algorithmic suggestions. 
+|  |  
+│  └─── jupyter_notebooks: Walk-through examples of the steps used to suggestion generation and refinement.
+|  |    └─── jn1_inspect_bootstrapping_workflow_TCGA.ipynb: 
+|  |    └─── jn2_inspect_maskrcnn_training.ipynb
+|  |    └─── jn4_inspect_maskrcnn_inference.ipynb
+|  |    └─── jn5_inspect_integrate_maskrcnn_prediction_with_region_priors.ipynb
+|  |    
+│  └─── scripts: python scripts used to generate bootstrapped suggestions using classical image processing, refine those suggestions using Mask R-CNN, further improve refinement by integrating region prior knowledge from the BCSS region annotation dataset, and saving the refined suggestions to a database to be shown to participants.
+|  |    └─── m1_bootstrap_nuclei_from_regions_TCGA.py
+|  |    └─── m2_train_TCGA_maskrcnn.py
+|  |    └─── m3_save_extra_TCGA_tiles_for_inference.py
+|  |    └─── m4_inference_TCGA_maskrcnn.py
+|  |    └─── m5_integrate_maskrcnn_prediction_with_region_priors.py
+|  |    └─── m6_save_bootstrap_to_db.py
+│  |
+|  └─── SQLite_Methods.py
+|  └─── bootstrapping_utils.py
+|  └─── configs_for_AlgorithmicSuggestions_MaskRCNN.py
+|  └─── data_management.py
+|  └─── maskrcnn_region_integration_utils.py
+|  └─── maskrcnn_utils_local.py 
+│
+└─── configs: configurations used, including color and ground truth codes
+|  └─── nucleus_GTcodes.csv
+|  └─── nucleus_model_configs.py
+|  └─── nucleus_style_defaults.py
+|
+└─── interrater: Python methods and scripts used for the interrater and intra-rater analysis.
+|  |  
+│  └─── scripts: scripts used to perform the interrater and intra-rater analysis and plots
+|  |    └─── i1_get_all_nucleus_anchors.py
+|  |    └─── i1b_get_krippendorph_summary.py
+|  |    └─── i1c_get_accuracy_stats.py
+|  |    └─── i1d_get_interrater_and_intrarater_stats.py
+|  |    └─── i1e_run_NPs_accuracy_simulations.py
+|  |    └─── i1f_parse_anchors_dataset.py
+|  |    └─── i2_show_effect_of_constrained_clustering.py
+|  |    └─── i3_get_anchor_composition_summary.py
+|  |    └─── i4_get_detection_and_classification_tally.py
+|  |    └─── i5_plot_participant_accuracy_stats.py
+|  |    └─── i6_plot_segmentation_accuracy_stats.py
+|  |    └─── i7_plot_participant_confusion.py
+|  |    └─── i8_plot_intrarater_stats.py
+|  |    └─── i9_plot_interrater_stats.py
+|  |    └─── i10_plot_krippendorph_summary.py
+|  |    └─── i11_plot_NPs_accuracy_simulations.py
+|  |    └─── i12_statistical_tests.py
+│  |
+|  └─── DawidAndSkene1979_EMGtruthInference.py
+|  └─── constrained_agglomerative_clustering.py
+|  └─── interrater_utils.py
+|  └─── krippendorff.py
+│
+└─── nucls_model: Python methods used in our paper: "Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. Explainable nucleus classification using Decision Tree Approximation of Learned Embeddings. Bioinformatics. 2021 Sep 29."
+|  |  
+|  └─── torchvision_detection_utils
+|  |    └─── ... Minimally-modified methods from the official torchvision implimentation 
+|  └─── BackboneSwitcher.py
+|  └─── DTALE.py
+|  └─── DataFormattingUtils.py
+|  └─── DataLoadingUtils.py
+|  └─── FasterRCNN.py
+|  └─── FeatureExtractor.py
+|  └─── GeneralizedRCNN.py
+|  └─── MaskRCNN.py
+|  └─── MiscUtils.py
+|  └─── ModelRunner.py
+|  └─── NucleusWorkflows.py
+|  └─── PartialMaskRCNN.py
+|  └─── PlottingUtils.py
+|  └─── ROIHeads.py
+|  
+└─── GeneralUtils.py
+└─── TorchUtils.py
+└─── wsi-conda-env-specs.txt
+
+```
+__________________________________________________________________________
+
 We describe the following contributions:
 
 ### 1. [NuCLS datasets](https://sites.google.com/view/nucls)  
