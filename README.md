@@ -4,7 +4,7 @@
 
 This repository contains the codebase corresponding to the following two papers:
 
-_Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Alhusseiny AM, AlMoslemany MA, Elmatboly AM, Pappalardo PA, Sakr RA. **NuCLS: A scalable crowdsourcing approach & dataset for nucleus classification and segmentation in breast cancer.** (Under reveiw). (Access [ArXiv preprint](https://arxiv.org/abs/2102.09099))_
+_Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Alhusseiny AM, AlMoslemany MA, Elmatboly AM, Pappalardo PA, Sakr RA. **NuCLS: A scalable crowdsourcing approach & dataset for nucleus classification and segmentation in breast cancer.** GigaScience 2022 (in print). (Access [ArXiv preprint](https://arxiv.org/abs/2102.09099))_
 
 _Amgad M, Atteya LA, Hussein H, Mohammed KH, Hafiz E, Elsebaie MA, Mobadersany P, Manthey D, Gutman DA, Elfandy H, Cooper LA. **Explainable nucleus classification using Decision Tree Approximation of Learned Embeddings.** Bioinformatics. 2021 Sep 29._
 
